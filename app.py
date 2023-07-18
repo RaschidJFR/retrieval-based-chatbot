@@ -38,4 +38,4 @@ def predict(message, chatbot):
     return response_json_object[0]['generated_text']
 
 
-gr.ChatInterface(predict, title=title, description=description).queue().launch(debug= True) 
+gr.ChatInterface(predict, title=title, description=description).queue(concurrency_count=40).launch() 
