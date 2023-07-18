@@ -61,4 +61,4 @@ def predict(message, chatbot):
                 gr.Warning("This line is not valid JSON: ", json_line)
                 continue
 
-gr.ChatInterface(predict, title=title, description=description, css=css).queue(concurrency_count=40).launch() 
+gr.ChatInterface(predict, title=title, description=description, css=css).queue(concurrency_count=75).launch() 
