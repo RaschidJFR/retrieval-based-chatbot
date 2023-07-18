@@ -1,7 +1,7 @@
 import json 
 import gradio as gr
 import os
-
+import requests
 
 hf_token = os.getenv('HF_TOKEN')
 api_url = os.getenv('API_URL') 
