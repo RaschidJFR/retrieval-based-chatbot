@@ -39,15 +39,27 @@ def predict(message, chatbot):
             if decoded_line.startswith('data:'):
                 json_line = decoded_line[5:]  # Exclude the first 5 characters ('data:')
             else:
-                print("This line does not start with 'data:':", decoded_line)
+                gr.Warning(f"This line does not start with 'data:': {decoded_line}")
                 continue
 
             # Load as JSON
             try:
-                partial_message = partial_message + json.loads(json_line)['token']['text'] 
-                yield partial_message
+                json_obj = json.loads(json_line)
+                if 'token' in json_obj:
+                    partial_message = partial_message + json_obj['token']['text'] 
+                    yield partial_message
+                elif 'error' in json_obj:
+                    yield json_obj['error'] + '. Please refresh and try again with an appropriate smaller input prompt.'
+                else:
+                    gr.Warning(f"The key 'token' does not exist in this JSON object: {json_obj}")
+
+                #partial_message = partial_message + json_obj['token']['text'] 
+                #yield partial_message
             except json.JSONDecodeError:
-                print("This line is not valid JSON: ", json_line)
+                gr.Warning(f"This line is not valid JSON: {json_line}")
+                continue
+            except KeyError as e:
+                gr.Warning(f"KeyError: {e} occurred for JSON object: {json_obj}")
                 continue
 
 gr.ChatInterface(predict, title=title, description=description, css=css).queue(concurrency_count=75).launch() 
