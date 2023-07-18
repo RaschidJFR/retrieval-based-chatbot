@@ -13,8 +13,8 @@ system_message = "\nYou are a helpful, respectful and honest assistant. Always a
 
 def predict(message, chatbot):
 
-    print(f"message is - {message}")
-    print(f"chatbot is - {chatbot}")
+    print(f"Logging: message is - {message}")
+    print(f"Logging: chatbot is - {chatbot}")
 
     input_prompt = f"[INST]<<SYS>>\n{system_message}\n<</SYS>>\n\n "
     for interaction in chatbot:
@@ -22,7 +22,7 @@ def predict(message, chatbot):
 
     input_prompt = input_prompt + message + " [/INST] "
 
-    print(f"input_prompt is - {input_prompt}")
+    print(f"Logging: input_prompt is - {input_prompt}")
     data = {
         "inputs": input_prompt,
         "parameters": {"max_new_tokens":100}
@@ -30,7 +30,7 @@ def predict(message, chatbot):
 
     response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
 
-    print(f'API response is - {response.text}')
+    print(f'Logging: API response is - {response.text}')
     response_json_object = json.loads(response.text)
     return response_json_object[0]['generated_text']
 
