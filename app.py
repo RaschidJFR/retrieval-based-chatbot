@@ -16,26 +16,16 @@ css = """.toast-wrap { display: none !important } """
 
 def predict(message, chatbot):
     
-    print(f"Logging: message is - {message}")
-    print(f"Logging: chatbot is - {chatbot}")
-
     input_prompt = f"[INST]<<SYS>>\n{system_message}\n<</SYS>>\n\n "
     for interaction in chatbot:
         input_prompt = input_prompt + interaction[0] + " [/INST] " + interaction[1] + " </s><s> [INST] "
 
     input_prompt = input_prompt + message + " [/INST] "
 
-    print(f"Logging: input_prompt is - {input_prompt}")
     data = {
         "inputs": input_prompt,
         "parameters": {"max_new_tokens":256}
     }
-
-    #response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
-
-    #print(f'Logging: API response is - {response.text}')
-    #response_json_object = json.loads(response.text)
-    #return response_json_object[0]['generated_text']
 
     response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
     
@@ -49,12 +39,11 @@ def predict(message, chatbot):
             if decoded_line.startswith('data:'):
                 json_line = decoded_line[5:]  # Exclude the first 5 characters ('data:')
             else:
-                print("This line does not start with 'data:':", decoded_line)
+                gr.Warning("This line does not start with 'data:':", decoded_line)
                 continue
 
             # Load as JSON
             try:
-                #print(json.loads(json_line)['token']['text'])
                 partial_message = partial_message + json.loads(json_line)['token']['text'] 
                 yield partial_message
             except json.JSONDecodeError:
