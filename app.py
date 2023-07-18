@@ -39,7 +39,7 @@ def predict(message, chatbot):
             if decoded_line.startswith('data:'):
                 json_line = decoded_line[5:]  # Exclude the first 5 characters ('data:')
             else:
-                gr.Warning("This line does not start with 'data:':", decoded_line)
+                print("This line does not start with 'data:':", decoded_line)
                 continue
 
             # Load as JSON
@@ -47,7 +47,7 @@ def predict(message, chatbot):
                 partial_message = partial_message + json.loads(json_line)['token']['text'] 
                 yield partial_message
             except json.JSONDecodeError:
-                gr.Warning("This line is not valid JSON: ", json_line)
+                print("This line is not valid JSON: ", json_line)
                 continue
 
 gr.ChatInterface(predict, title=title, description=description, css=css).queue(concurrency_count=75).launch() 
