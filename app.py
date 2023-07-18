@@ -31,11 +31,34 @@ def predict(message, chatbot):
         "parameters": {"max_new_tokens":256}
     }
 
-    response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
+    #response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
 
-    print(f'Logging: API response is - {response.text}')
-    response_json_object = json.loads(response.text)
-    return response_json_object[0]['generated_text']
+    #print(f'Logging: API response is - {response.text}')
+    #response_json_object = json.loads(response.text)
+    #return response_json_object[0]['generated_text']
 
+    response = requests.post(url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
+    
+    partial_message = ""
+    for line in response.iter_lines():
+        if line:  # filter out keep-alive new lines
+            # Decode from bytes to string
+            decoded_line = line.decode('utf-8')
+
+            # Remove 'data:' prefix 
+            if decoded_line.startswith('data:'):
+                json_line = decoded_line[5:]  # Exclude the first 5 characters ('data:')
+            else:
+                print("This line does not start with 'data:':", decoded_line)
+                continue
+
+            # Load as JSON
+            try:
+                #print(json.loads(json_line)['token']['text'])
+                partial_message = partial_message + json.loads(json_line)['token']['text'] 
+                yield partial_message
+            except json.JSONDecodeError:
+                gr.Warning("This line is not valid JSON: ", json_line)
+                continue
 
 gr.ChatInterface(predict, title=title, description=description, css=css).queue(concurrency_count=40).launch() 
