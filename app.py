@@ -37,7 +37,7 @@ def predict(message, chatbot):
     #response_json_object = json.loads(response.text)
     #return response_json_object[0]['generated_text']
 
-    response = requests.post(url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
+    response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
     
     partial_message = ""
     for line in response.iter_lines():
