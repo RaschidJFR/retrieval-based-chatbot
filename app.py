@@ -16,7 +16,7 @@ css = """.toast-wrap { display: none !important } """
 
 def predict(message, chatbot):
     
-    input_prompt = f"[INST]<<SYS>>\n{system_message}\n<</SYS>>\n\n "
+    input_prompt = f"[INST] <<SYS>>\n{system_message}\n<</SYS>>\n\n "
     for interaction in chatbot:
         input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s> [INST] "
 
