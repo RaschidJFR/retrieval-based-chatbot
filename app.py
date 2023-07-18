@@ -10,12 +10,11 @@ headers = {
 }
 
 system_message = "\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."
+title = "Llama2 70B Chatbot : Explore exclusively on HuggingFace"
+description = """This Space demonstrates model [Llama-2-70b-chat-hf](https://huggingface.co/meta-llama/Llama-2-70b-chat-hf) by Meta, running on Inference Endpoints using text-generation-inference. To have your own dedicated endpoint, you can [deploy it on Inference Endpoints](https://ui.endpoints.huggingface.co/). """ 
 
 
 def predict(message, chatbot):
-
-    title = "Llama2 70B Chatbot : Explore exclusively on HuggingFace"
-    description = """This Space demonstrates model [Llama-2-70b-chat-hf](https://huggingface.co/meta-llama/Llama-2-70b-chat-hf) by Meta, running on Inference Endpoints using text-generation-inference. To have your own dedicated endpoint, you can [deploy it on Inference Endpoints](https://ui.endpoints.huggingface.co/). """ 
     
     print(f"Logging: message is - {message}")
     print(f"Logging: chatbot is - {chatbot}")
@@ -39,4 +38,4 @@ def predict(message, chatbot):
     return response_json_object[0]['generated_text']
 
 
-gr.ChatInterface(predict).queue().launch(debug= True) 
+gr.ChatInterface(predict, title=title, description=description).queue().launch(debug= True) 
