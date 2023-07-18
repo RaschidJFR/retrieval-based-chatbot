@@ -25,7 +25,7 @@ def predict(message, chatbot):
     print(f"Logging: input_prompt is - {input_prompt}")
     data = {
         "inputs": input_prompt,
-        "parameters": {"max_new_tokens":100}
+        "parameters": {"max_new_tokens":256}
     }
 
     response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
