@@ -13,6 +13,13 @@ system_message = "\nYou are a helpful, respectful and honest assistant. Always a
 title = "Llama2 70B Chatbot"
 description = """This Space demonstrates model [Llama-2-70b-chat-hf](https://huggingface.co/meta-llama/Llama-2-70b-chat-hf) by Meta, running on Inference Endpoints using text-generation-inference. To have your own dedicated endpoint, you can [deploy it on Inference Endpoints](https://ui.endpoints.huggingface.co/). """ 
 css = """.toast-wrap { display: none !important } """
+examples=[
+    'Hello there! How are you doing?',
+    'Can you explain to me briefly what is Python programming language?',
+    'Explain the plot of Cinderella in a sentence.',
+    'How many hours does it take a man to eat a Helicopter?',
+    "Write a 100-word article on 'Benefits of Open-Source in AI research'",
+    ]
 
 def predict(message, chatbot):
     
@@ -60,4 +67,4 @@ def predict(message, chatbot):
                 gr.Warning(f"KeyError: {e} occurred for JSON object: {json_obj}")
                 continue
 
-gr.ChatInterface(predict, title=title, description=description, css=css).queue(concurrency_count=75).launch() 
+gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True).queue(concurrency_count=75).launch() 
