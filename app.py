@@ -19,8 +19,6 @@ This Space demonstrates model [Llama-2-70b-chat-hf](https://huggingface.co/meta-
 
 🔨 Looking for a lighter chat model version of Llama-v2? Check out the large [7B Chat model demo](https://huggingface.co/spaces/huggingface-projects/llama-2-7b-chat).
 
----
-
 Note: As a derivate work of [Llama-2-70b-chat](https://huggingface.co/meta-llama/Llama-2-70b-chat-hf) by Meta,
 this demo is governed by the original [license](https://huggingface.co/spaces/ysharma/Explore_llamav2_with_TGI/blob/main/LICENSE.txt) and [acceptable use policy](https://huggingface.co/spaces/ysharma/Explore_llamav2_with_TGI/blob/main/USE_POLICY.md).
 """
