@@ -53,8 +53,6 @@ def predict(message, chatbot):
                 else:
                     gr.Warning(f"The key 'token' does not exist in this JSON object: {json_obj}")
 
-                #partial_message = partial_message + json_obj['token']['text'] 
-                #yield partial_message
             except json.JSONDecodeError:
                 gr.Warning(f"This line is not valid JSON: {json_line}")
                 continue
