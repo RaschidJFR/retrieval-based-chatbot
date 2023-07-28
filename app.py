@@ -43,7 +43,10 @@ def predict(message, chatbot):
 
     data = {
         "inputs": input_prompt,
-        "parameters": {"max_new_tokens":256}
+        "parameters": {"max_new_tokens":256,
+                      "do_sample":True,
+                      "top_p":0.6,
+                      "temperature":0.9,}
     }
 
     response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
