@@ -4,7 +4,8 @@ import os
 import requests
 
 hf_token = os.getenv('HF_TOKEN')
-api_url = os.getenv('API_URL') 
+api_url = os.getenv('API_URL')
+api_url_nostream = os.getenv('API_URL_NOSTREAM')
 headers = {
     'Content-Type': 'application/json',
 }
@@ -82,4 +83,44 @@ def predict(message, chatbot):
                 gr.Warning(f"KeyError: {e} occurred for JSON object: {json_obj}")
                 continue
 
-gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True).queue(concurrency_count=75).launch() 
+
+def predict_batch(message, chatbot):
+
+    input_prompt = f"[INST]<<SYS>>\n{system_message}\n<</SYS>>\n\n "
+    for interaction in chatbot:
+        input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s> [INST] "
+
+    input_prompt = input_prompt + str(message) + " [/INST] "
+
+    data = {
+        "inputs": input_prompt,
+        "parameters": {"max_new_tokens":256}
+    }
+
+    response = requests.post(api_url_nostream, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
+    
+    if response.status_code == 200:  # check if the request was successful
+        try:
+            json_obj = response.json()
+            if 'generated_text' in json_obj and len(json_obj['generated_text']) > 0:
+                return json_obj['generated_text']
+            elif 'error' in json_obj:
+                return json_obj['error'] + ' Please refresh and try again with smaller input prompt'
+            else:
+                print(f"Unexpected response: {json_obj}")
+        except json.JSONDecodeError:
+            print(f"Failed to decode response as JSON: {response.text}")
+    else:
+        print(f"Request failed with status code {response.status_code}")
+
+
+# Gradio Demo 
+with gr.Blocks() as demo:
+
+    with gr.Tab("Streaming"):
+        gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True) 
+    
+    with gr.Tab("Batch"):
+        gr.ChatInterface(predict_batch, title=title, description=description, css=css, examples=examples, cache_examples=True) 
+
+demo.queue(concurrency_count=75).launch(debug=True)
