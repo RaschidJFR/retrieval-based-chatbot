@@ -123,4 +123,4 @@ with gr.Blocks() as demo:
     with gr.Tab("Batch"):
         gr.ChatInterface(predict_batch, title=title, description=description, css=css, examples=examples, cache_examples=True) 
 
-demo.queue(concurrency_count=75).launch(debug=True)
+demo.queue(concurrency_count=75, max_size=100).launch(debug=True)
