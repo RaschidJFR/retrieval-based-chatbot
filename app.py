@@ -34,7 +34,15 @@ examples=[
     ]
 
 
-def predict(message, chatbot):
+# Stream text
+def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
+
+    if system_prompt != "":
+        system_message = system_prompt
+    temperature = float(temperature)
+    if temperature < 1e-2:
+        temperature = 1e-2
+    top_p = float(top_p)
     
     input_prompt = f"[INST] <<SYS>>\n{system_message}\n<</SYS>>\n\n "
     for interaction in chatbot:
@@ -44,12 +52,13 @@ def predict(message, chatbot):
 
     data = {
         "inputs": input_prompt,
-        "parameters": {"max_new_tokens":256,
-                      "do_sample":True,
-                      "top_p":0.6,
-                      "temperature":0.9,}
-    }
-
+        "parameters": {
+            "max_new_tokens":max_new_tokens,
+            "temperature"=temperature,
+            "top_p"=top_p,
+            "repetition_penalty"=repetition_penalty, 
+            "do_sample":True,
+        },
     response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
     
     partial_message = ""
@@ -84,8 +93,16 @@ def predict(message, chatbot):
                 continue
 
 
-def predict_batch(message, chatbot):
+# No Stream    
+def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
 
+    if system_prompt != "":
+        system_message = system_prompt
+    temperature = float(temperature)
+    if temperature < 1e-2:
+        temperature = 1e-2
+    top_p = float(top_p)
+    
     input_prompt = f"[INST]<<SYS>>\n{system_message}\n<</SYS>>\n\n "
     for interaction in chatbot:
         input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s> [INST] "
@@ -94,7 +111,13 @@ def predict_batch(message, chatbot):
 
     data = {
         "inputs": input_prompt,
-        "parameters": {"max_new_tokens":256}
+        "parameters": {
+            "max_new_tokens":max_new_tokens,
+            "temperature"=temperature,
+            "top_p"=top_p,
+            "repetition_penalty"=repetition_penalty, 
+            "do_sample":True,
+        },
     }
 
     response = requests.post(api_url_nostream, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
@@ -114,13 +137,55 @@ def predict_batch(message, chatbot):
         print(f"Request failed with status code {response.status_code}")
 
 
+
+additional_inputs=[
+    gr.Textbox("", label="Optional system prompt"),
+    gr.Slider(
+        label="Temperature",
+        value=0.9,
+        minimum=0.0,
+        maximum=1.0,
+        step=0.05,
+        interactive=True,
+        info="Higher values produce more diverse outputs",
+    ),
+    gr.Slider(
+        label="Max new tokens",
+        value=256,
+        minimum=0,
+        maximum=4096,
+        step=64,
+        interactive=True,
+        info="The maximum numbers of new tokens",
+    ),
+    gr.Slider(
+        label="Top-p (nucleus sampling)",
+        value=0.6,
+        minimum=0.0,
+        maximum=1,
+        step=0.05,
+        interactive=True,
+        info="Higher values sample more low-probability tokens",
+    ),
+    gr.Slider(
+        label="Repetition penalty",
+        value=1.2,
+        minimum=1.0,
+        maximum=2.0,
+        step=0.05,
+        interactive=True,
+        info="Penalize repeated tokens",
+    )
+]
+
+
 # Gradio Demo 
 with gr.Blocks() as demo:
 
     with gr.Tab("Streaming"):
-        gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True) 
+        gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
     
     with gr.Tab("Batch"):
-        gr.ChatInterface(predict_batch, title=title, description=description, css=css, examples=examples, cache_examples=True) 
+        gr.ChatInterface(predict_batch, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
 
 demo.queue(concurrency_count=75, max_size=100).launch(debug=True)
