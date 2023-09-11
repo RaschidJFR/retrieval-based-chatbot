@@ -54,9 +54,9 @@ def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=
         "inputs": input_prompt,
         "parameters": {
             "max_new_tokens":max_new_tokens,
-            "temperature"=temperature,
-            "top_p"=top_p,
-            "repetition_penalty"=repetition_penalty, 
+            "temperature":temperature,
+            "top_p":top_p,
+            "repetition_penalty":repetition_penalty, 
             "do_sample":True,
         },
     }
@@ -114,9 +114,9 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         "inputs": input_prompt,
         "parameters": {
             "max_new_tokens":max_new_tokens,
-            "temperature"=temperature,
-            "top_p"=top_p,
-            "repetition_penalty"=repetition_penalty, 
+            "temperature":temperature,
+            "top_p":top_p,
+            "repetition_penalty":repetition_penalty, 
             "do_sample":True,
         },
     }
@@ -138,6 +138,12 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         print(f"Request failed with status code {response.status_code}")
 
 
+def vote(data: gr.LikeData):
+    if data.liked:
+        print("You upvoted this response: " + data.value)
+    else:
+        print("You downvoted this response: " + data.value)
+        
 
 additional_inputs=[
     gr.Textbox("", label="Optional system prompt"),
@@ -179,14 +185,36 @@ additional_inputs=[
     )
 ]
 
+chatbot_stream = gr.Chatbot(avatar_images=('user.png', 'bot2.png'),bubble_full_width = False)
+chatbot_batch = gr.Chatbot(avatar_images=('user1.png', 'bot1.png'),bubble_full_width = False)
+chat_interface_stream = gr.ChatInterface(predict, 
+                 title=title, 
+                 description=description, 
+                 chatbot=chatbot,
+                 css=css, 
+                 examples=examples, 
+                 cache_examples=True, 
+                 additional_inputs=additional_inputs,) 
+chat_interface_batch = gr.ChatInterface(predict_batch, 
+                 title=title, 
+                 description=description, 
+                 chatbot=chatbot,
+                 css=css, 
+                 examples=examples, 
+                 cache_examples=True, 
+                 additional_inputs=additional_inputs,) 
 
 # Gradio Demo 
 with gr.Blocks() as demo:
 
     with gr.Tab("Streaming"):
-        gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
-    
-    with gr.Tab("Batch"):
-        gr.ChatInterface(predict_batch, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
+        #gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
+        chatbot_stream.like(vote, None, None)
+        chat_interface_stream.render()
 
+    with gr.Tab("Batch"):
+        #gr.ChatInterface(predict_batch, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
+        chatbot_batch.like(vote, None, None)
+        chat_interface_batch.render()
+        
 demo.queue(concurrency_count=75, max_size=100).launch(debug=True)
