@@ -39,6 +39,9 @@ def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=
 
     if system_prompt != "":
         system_message = system_prompt
+    else:
+        system_message = system_message
+        
     temperature = float(temperature)
     if temperature < 1e-2:
         temperature = 1e-2
@@ -99,6 +102,9 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
 
     if system_prompt != "":
         system_message = system_prompt
+    else:
+        system_message = system_message
+        
     temperature = float(temperature)
     if temperature < 1e-2:
         temperature = 1e-2
