@@ -59,6 +59,7 @@ def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=
             "repetition_penalty"=repetition_penalty, 
             "do_sample":True,
         },
+    }
     response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
     
     partial_message = ""
