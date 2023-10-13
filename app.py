@@ -34,25 +34,29 @@ examples=[
     ]
 
 
+# Note: We have removed default system prompt as requested by the paper authors [Dated: 13/Oct/2023]
+# Prompting style for Llama2 without using system prompt
+# <s>[INST] {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s><s>[INST] {{ user_msg_2 }} [/INST]
+
+
 # Stream text
 def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
 
     if system_prompt != "":
-        system_message = system_prompt
+        input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
     else:
-        system_message = "\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."
+        input_prompt = f"<s>[INST] "
         
     temperature = float(temperature)
     if temperature < 1e-2:
         temperature = 1e-2
     top_p = float(top_p)
     
-    input_prompt = f"[INST] <<SYS>>\n{system_message}\n<</SYS>>\n\n "
     for interaction in chatbot:
-        input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s> [INST] "
+        input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s>[INST] "
 
     input_prompt = input_prompt + str(message) + " [/INST] "
-
+ 
     data = {
         "inputs": input_prompt,
         "parameters": {
@@ -101,18 +105,17 @@ def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=
 def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
 
     if system_prompt != "":
-        system_message = system_prompt
+        input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
     else:
-        system_message = "\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."
+        input_prompt = f"<s>[INST] "
         
     temperature = float(temperature)
     if temperature < 1e-2:
         temperature = 1e-2
     top_p = float(top_p)
     
-    input_prompt = f"[INST]<<SYS>>\n{system_message}\n<</SYS>>\n\n "
     for interaction in chatbot:
-        input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s> [INST] "
+        input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s>[INST] "
 
     input_prompt = input_prompt + str(message) + " [/INST] "
 
