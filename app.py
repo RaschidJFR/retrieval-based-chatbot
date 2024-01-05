@@ -6,8 +6,6 @@ from huggingface_hub import AsyncInferenceClient
 
 HF_TOKEN = os.getenv('HF_TOKEN')
 api_url = os.getenv('API_URL')
-#api_url_nostream = os.getenv('API_URL_NOSTREAM')
-#headers = {'Content-Type': 'application/json',}
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 client = AsyncInferenceClient(api_url)
 
@@ -41,7 +39,7 @@ examples=[
 # <s>[INST] {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s><s>[INST] {{ user_msg_2 }} [/INST]
 
 
-# Stream text
+# Stream text - stream tokens with InferenceClient from TGI
 async def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
     
     if system_prompt != "":
@@ -72,10 +70,9 @@ async def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         yield partial_message
         
 
-# No Stream    
+# No Stream - batch produce tokens using TGI inference endpoint
 def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
-    print(f"message - {message}")
-    print(f"chatbot - {chatbot}")
+    
     if system_prompt != "":
         input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
     else:
@@ -104,16 +101,10 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
     }
 
     response = requests.post(api_url, headers=headers,  json=data ) #auth=('hf', hf_token)) data=json.dumps(data),
-    print(f"response - {response}")
-    print(f"response.status_code - {response.status_code}")
-    print(f"response.text - {response.text}")
-    print(f"type(response.text) - {type(response.text)}")
     
     if response.status_code == 200:  # check if the request was successful
         try:
             json_obj = response.json()
-            print(f"type(response.json) - {type(json_obj)}")
-            print(f"response.json - {json_obj}")
             if 'generated_text' in json_obj[0] and len(json_obj[0]['generated_text']) > 0:
                 return json_obj[0]['generated_text']
             elif 'error' in json_obj[0]:
@@ -199,12 +190,12 @@ chat_interface_batch=gr.ChatInterface(predict_batch,
 with gr.Blocks() as demo:
 
     with gr.Tab("Streaming"):
-        #gr.ChatInterface(predict, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
+        # streaming chatbot
         chatbot_stream.like(vote, None, None)
         chat_interface_stream.render()
 
     with gr.Tab("Batch"):
-        #gr.ChatInterface(predict_batch, title=title, description=description, css=css, examples=examples, cache_examples=True, additional_inputs=additional_inputs,) 
+        # non-streaming chatbot
         chatbot_batch.like(vote, None, None)
         chat_interface_batch.render()
         
