@@ -39,8 +39,8 @@ examples=[
 
 
 # Stream text
-def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
-
+async def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
+    
     if system_prompt != "":
         input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
     else:
@@ -55,53 +55,24 @@ def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=
         input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s>[INST] "
 
     input_prompt = input_prompt + str(message) + " [/INST] "
- 
-    data = {
-        "inputs": input_prompt,
-        "parameters": {
-            "max_new_tokens":max_new_tokens,
-            "temperature":temperature,
-            "top_p":top_p,
-            "repetition_penalty":repetition_penalty, 
-            "do_sample":True,
-        },
-    }
-    response = requests.post(api_url, headers=headers, data=json.dumps(data), auth=('hf', hf_token), stream=True)
-    
+
     partial_message = ""
-    for line in response.iter_lines():
-        if line:  # filter out keep-alive new lines
-            # Decode from bytes to string
-            decoded_line = line.decode('utf-8')
-
-            # Remove 'data:' prefix 
-            if decoded_line.startswith('data:'):
-                json_line = decoded_line[5:]  # Exclude the first 5 characters ('data:')
-            else:
-                gr.Warning(f"This line does not start with 'data:': {decoded_line}")
-                continue
-
-            # Load as JSON
-            try:
-                json_obj = json.loads(json_line)
-                if 'token' in json_obj:
-                    partial_message = partial_message + json_obj['token']['text'] 
-                    yield partial_message
-                elif 'error' in json_obj:
-                    yield json_obj['error'] + '. Please refresh and try again with an appropriate smaller input prompt.'
-                else:
-                    gr.Warning(f"The key 'token' does not exist in this JSON object: {json_obj}")
-
-            except json.JSONDecodeError:
-                gr.Warning(f"This line is not valid JSON: {json_line}")
-                continue
-            except KeyError as e:
-                gr.Warning(f"KeyError: {e} occurred for JSON object: {json_obj}")
-                continue
-
+    async for token in await client.text_generation(prompt=input_prompt, 
+                                    max_new_tokens=max_new_tokens, 
+                                    stream=True, 
+                                    best_of=1, 
+                                    temperature=temperature, 
+                                    top_p=top_p, 
+                                    do_sample=True, 
+                                    repetition_penalty=repetition_penalty):
+        partial_message = partial_message + token 
+        yield partial_message
+        
 
 # No Stream    
 def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
+    print(f"message - {message}")
+    print(f"chatbot - {chatbot}")
     if system_prompt != "":
         input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
     else:
@@ -129,11 +100,17 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         },
     }
 
-    response = requests.post(api_url_nostream, headers=headers,  json=data ) 
+    response = requests.post(api_url_nostream, headers=headers,  json=data ) #auth=('hf', hf_token)) data=json.dumps(data),
+    print(f"response - {response}")
+    print(f"response.status_code - {response.status_code}")
+    print(f"response.text - {response.text}")
+    print(f"type(response.text) - {type(response.text)}")
     
     if response.status_code == 200:  # check if the request was successful
         try:
             json_obj = response.json()
+            print(f"type(response.json) - {type(json_obj)}")
+            print(f"response.json - {json_obj}")
             if 'generated_text' in json_obj[0] and len(json_obj[0]['generated_text']) > 0:
                 return json_obj[0]['generated_text']
             elif 'error' in json_obj[0]:
@@ -144,6 +121,7 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
             print(f"Failed to decode response as JSON: {response.text}")
     else:
         print(f"Request failed with status code {response.status_code}")
+
 
 
 def vote(data: gr.LikeData):
