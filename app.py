@@ -2,12 +2,15 @@ import json
 import gradio as gr
 import os
 import requests
+from huggingface_hub import AsyncInferenceClient
 
 hf_token = os.getenv('HF_TOKEN')
 api_url = os.getenv('API_URL')
-api_url_nostream = os.getenv('API_URL_NOSTREAM')
+#api_url_nostream = os.getenv('API_URL_NOSTREAM')
 #headers = {'Content-Type': 'application/json',}
 headers = {"Authorization": f"Bearer {hf_token}"}
+client = AsyncInferenceClient(api_url)
+
 
 system_message = "\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."
 title = "Llama2 70B Chatbot"
@@ -100,7 +103,7 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         },
     }
 
-    response = requests.post(api_url_nostream, headers=headers,  json=data ) #auth=('hf', hf_token)) data=json.dumps(data),
+    response = requests.post(api_url, headers=headers,  json=data ) #auth=('hf', hf_token)) data=json.dumps(data),
     print(f"response - {response}")
     print(f"response.status_code - {response.status_code}")
     print(f"response.text - {response.text}")
