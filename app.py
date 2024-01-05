@@ -6,9 +6,8 @@ import requests
 hf_token = os.getenv('HF_TOKEN')
 api_url = os.getenv('API_URL')
 api_url_nostream = os.getenv('API_URL_NOSTREAM')
-headers = {
-    'Content-Type': 'application/json',
-}
+#headers = {'Content-Type': 'application/json',}
+headers = {"Authorization": f"Bearer {hf_token}"}
 
 system_message = "\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."
 title = "Llama2 70B Chatbot"
@@ -103,7 +102,6 @@ def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=
 
 # No Stream    
 def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
-
     if system_prompt != "":
         input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
     else:
@@ -118,6 +116,7 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s>[INST] "
 
     input_prompt = input_prompt + str(message) + " [/INST] "
+    print(f"input_prompt - {input_prompt}")
 
     data = {
         "inputs": input_prompt,
@@ -130,17 +129,17 @@ def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         },
     }
 
-    response = requests.post(api_url_nostream, headers=headers, data=json.dumps(data), auth=('hf', hf_token))
+    response = requests.post(api_url_nostream, headers=headers,  json=data ) 
     
     if response.status_code == 200:  # check if the request was successful
         try:
             json_obj = response.json()
-            if 'generated_text' in json_obj and len(json_obj['generated_text']) > 0:
-                return json_obj['generated_text']
-            elif 'error' in json_obj:
-                return json_obj['error'] + ' Please refresh and try again with smaller input prompt'
+            if 'generated_text' in json_obj[0] and len(json_obj[0]['generated_text']) > 0:
+                return json_obj[0]['generated_text']
+            elif 'error' in json_obj[0]:
+                return json_obj[0]['error'] + ' Please refresh and try again with smaller input prompt'
             else:
-                print(f"Unexpected response: {json_obj}")
+                print(f"Unexpected response: {json_obj[0]}")
         except json.JSONDecodeError:
             print(f"Failed to decode response as JSON: {response.text}")
     else:
@@ -203,7 +202,7 @@ chat_interface_stream = gr.ChatInterface(predict,
                  chatbot=chatbot_stream,
                  css=css, 
                  examples=examples, 
-                 cache_examples=True, 
+                 #cache_examples=True, 
                  additional_inputs=additional_inputs,) 
 chat_interface_batch=gr.ChatInterface(predict_batch, 
                  title=title, 
@@ -212,7 +211,7 @@ chat_interface_batch=gr.ChatInterface(predict_batch,
                  chatbot=chatbot_batch,
                  css=css, 
                  examples=examples, 
-                 cache_examples=True, 
+                 #cache_examples=True, 
                  additional_inputs=additional_inputs,) 
 
 # Gradio Demo 
