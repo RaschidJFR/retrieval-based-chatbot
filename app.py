@@ -208,4 +208,4 @@ with gr.Blocks() as demo:
         chatbot_batch.like(vote, None, None)
         chat_interface_batch.render()
         
-demo.queue(concurrency_count=75, max_size=100).launch(debug=True)
+demo.queue(max_size=100).launch()
