@@ -4,11 +4,11 @@ import os
 import requests
 from huggingface_hub import AsyncInferenceClient
 
-hf_token = os.getenv('HF_TOKEN')
+HF_TOKEN = os.getenv('HF_TOKEN')
 api_url = os.getenv('API_URL')
 #api_url_nostream = os.getenv('API_URL_NOSTREAM')
 #headers = {'Content-Type': 'application/json',}
-headers = {"Authorization": f"Bearer {hf_token}"}
+headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 client = AsyncInferenceClient(api_url)
 
 
