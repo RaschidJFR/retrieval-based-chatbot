@@ -1,16 +1,15 @@
-import json 
 import gradio as gr
 import os
-import requests
 from huggingface_hub import AsyncInferenceClient
+from pdf import get_documentation_text
 
 HF_TOKEN = os.getenv('HF_TOKEN')
 api_url = os.getenv('API_URL')
 headers = {"Authorization": f"Bearer {HF_TOKEN}"}
 client = AsyncInferenceClient(api_url)
 
-
 system_message = "\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information."
+chatbot_instructions = "Read this document. Any future prompt I ask you will be related to this content. \n\n" + get_documentation_text()
 title = "Llama2 70B Chatbot"
 description = """
 This Space demonstrates model [Llama-2-70b-chat-hf](https://huggingface.co/meta-llama/Llama-2-70b-chat-hf) by Meta, a Llama 2 model with 70B parameters fine-tuned for chat instructions. This space is running on Inference Endpoints using text-generation-inference library. If you want to run your own service, you can also [deploy the model on Inference Endpoints](https://ui.endpoints.huggingface.co/).
@@ -25,13 +24,6 @@ Note: As a derivate work of [Llama-2-70b-chat](https://huggingface.co/meta-llama
 this demo is governed by the original [license](https://huggingface.co/spaces/ysharma/Explore_llamav2_with_TGI/blob/main/LICENSE.txt) and [acceptable use policy](https://huggingface.co/spaces/ysharma/Explore_llamav2_with_TGI/blob/main/USE_POLICY.md).
 """
 css = """.toast-wrap { display: none !important } """
-examples=[
-    ['Hello there! How are you doing?'],
-    ['Can you explain to me briefly what is Python programming language?'],
-    ['Explain the plot of Cinderella in a sentence.'],
-    ['How many hours does it take a man to eat a Helicopter?'],
-    ["Write a 100-word article on 'Benefits of Open-Source in AI research'"],
-    ]
 
 
 # Note: We have removed default system prompt as requested by the paper authors [Dated: 13/Oct/2023]
@@ -42,10 +34,13 @@ examples=[
 # Stream text - stream tokens with InferenceClient from TGI
 async def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
     
+    # Initialize the input prompt with initial instructions
+    input_prompt = f"<s>[INST] {chatbot_instructions} [/INST] Ok </s><s>[INST] "
+    
     if system_prompt != "":
-        input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
+        input_prompt = input_prompt + f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
     else:
-        input_prompt = f"<s>[INST] "
+        input_prompt = input_prompt + f"<s>[INST] "
         
     temperature = float(temperature)
     if temperature < 1e-2:
@@ -70,60 +65,6 @@ async def predict(message, chatbot, system_prompt="", temperature=0.9, max_new_t
         yield partial_message
         
 
-# No Stream - batch produce tokens using TGI inference endpoint
-def predict_batch(message, chatbot, system_prompt="", temperature=0.9, max_new_tokens=256, top_p=0.6, repetition_penalty=1.0,):
-    
-    if system_prompt != "":
-        input_prompt = f"<s>[INST] <<SYS>>\n{system_prompt}\n<</SYS>>\n\n "
-    else:
-        input_prompt = f"<s>[INST] "
-        
-    temperature = float(temperature)
-    if temperature < 1e-2:
-        temperature = 1e-2
-    top_p = float(top_p)
-    
-    for interaction in chatbot:
-        input_prompt = input_prompt + str(interaction[0]) + " [/INST] " + str(interaction[1]) + " </s><s>[INST] "
-
-    input_prompt = input_prompt + str(message) + " [/INST] "
-    print(f"input_prompt - {input_prompt}")
-
-    data = {
-        "inputs": input_prompt,
-        "parameters": {
-            "max_new_tokens":max_new_tokens,
-            "temperature":temperature,
-            "top_p":top_p,
-            "repetition_penalty":repetition_penalty, 
-            "do_sample":True,
-        },
-    }
-
-    response = requests.post(api_url, headers=headers,  json=data ) #auth=('hf', hf_token)) data=json.dumps(data),
-    
-    if response.status_code == 200:  # check if the request was successful
-        try:
-            json_obj = response.json()
-            if 'generated_text' in json_obj[0] and len(json_obj[0]['generated_text']) > 0:
-                return json_obj[0]['generated_text']
-            elif 'error' in json_obj[0]:
-                return json_obj[0]['error'] + ' Please refresh and try again with smaller input prompt'
-            else:
-                print(f"Unexpected response: {json_obj[0]}")
-        except json.JSONDecodeError:
-            print(f"Failed to decode response as JSON: {response.text}")
-    else:
-        print(f"Request failed with status code {response.status_code}")
-
-
-
-def vote(data: gr.LikeData):
-    if data.liked:
-        print("You upvoted this response: " + data.value)
-    else:
-        print("You downvoted this response: " + data.value)
-        
 
 additional_inputs=[
     gr.Textbox("", label="Optional system prompt"),
@@ -166,23 +107,12 @@ additional_inputs=[
 ]
 
 chatbot_stream = gr.Chatbot(avatar_images=('user.png', 'bot2.png'),bubble_full_width = False)
-chatbot_batch = gr.Chatbot(avatar_images=('user1.png', 'bot1.png'),bubble_full_width = False)
 chat_interface_stream = gr.ChatInterface(predict, 
                  title=title, 
                  description=description, 
                  textbox=gr.Textbox(),
                  chatbot=chatbot_stream,
                  css=css, 
-                 examples=examples, 
-                 #cache_examples=True, 
-                 additional_inputs=additional_inputs,) 
-chat_interface_batch=gr.ChatInterface(predict_batch, 
-                 title=title, 
-                 description=description, 
-                 textbox=gr.Textbox(),
-                 chatbot=chatbot_batch,
-                 css=css, 
-                 examples=examples, 
                  #cache_examples=True, 
                  additional_inputs=additional_inputs,) 
 
@@ -191,12 +121,7 @@ with gr.Blocks() as demo:
 
     with gr.Tab("Streaming"):
         # streaming chatbot
-        chatbot_stream.like(vote, None, None)
+        #chatbot_stream.like(vote, None, None)
         chat_interface_stream.render()
 
-    with gr.Tab("Batch"):
-        # non-streaming chatbot
-        chatbot_batch.like(vote, None, None)
-        chat_interface_batch.render()
-        
 demo.queue(max_size=100).launch()
